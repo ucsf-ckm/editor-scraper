@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>Editor Scraper</title>
+  </head>
+  <body>
+    <h1>Editor Scraper</h1>
+
+    <form action="#" method="get">
+      <label for="publisher">Publisher:</label>
+      <select name="publisher" id="publisher">
+        <option selected="true" disabled="disabled" value="">--Please choose an option--</option>
+        <option value="AMA">AMA</option>
+        <option value="BMC">BMC</option>
+        <option value="BMJ">BMJ</option>
+        <option value="LWW">LWW</option>
+        <option value="Nature">Nature</option>
+        <option value="Springer">Springer</option>
+    </select>
+      <input id="get-editors" type="button" value="Get Editors">
+    </form>
+    
+    <pre id="results"></pre>
+
+    <div id="progress"></div>
+
+  </body>
+</html>
