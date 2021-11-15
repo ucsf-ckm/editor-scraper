@@ -24,6 +24,7 @@
   "homepage": "https://github.com/ucsf-ckm/editor-scraper#readme",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
+    "puppeteer": "^10.4.0",
     "puppeteer-extra": "^3.1.15",
     "puppeteer-extra-plugin-adblocker": "^2.11.9",
     "puppeteer-extra-plugin-stealth": "^2.6.5",
@@ -36,8 +37,12 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.61",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
     "@electron-forge/maker-zip": "^6.0.0-beta.61",
-    "electron": "^15.3.0",
+    "electron": "^15.3.1",
     "standard": "^16.0.3"
+  },
+  "build": {
+    "asar": true,
+    "asarUnpack": "node_modules/puppeteer/.local-chromium/**/*"
   },
   "config": {
     "forge": {
