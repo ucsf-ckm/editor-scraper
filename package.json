@@ -24,7 +24,7 @@
   "homepage": "https://github.com/ucsf-ckm/editor-scraper#readme",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "puppeteer": "^10.4.0",
+    "puppeteer": "^13.1.2",
     "puppeteer-extra": "^3.1.15",
     "puppeteer-extra-plugin-adblocker": "^2.11.9",
     "puppeteer-extra-plugin-stealth": "^2.6.5",
