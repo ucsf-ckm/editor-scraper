@@ -9,13 +9,6 @@ const printTsvLine = (link, title, members, event) => {
 }
 
 const workflows = {
-  // AACR: {
-  //   start: 'https://aacrjournals.org/content/authors/submit_ms',
-  //   getLinks: async (page, event) => {
-  //     const links = await page.evaluate("Array.from(document.querySelectorAll('a')).filter((el) => el.innerText === 'Editorial Board').map((el) => el.href)")
-  //     return links;
-  //   }
-  // },
   AMA: {
     start: 'https://jamanetwork.com/',
     getData: async (page, event) => {
@@ -261,7 +254,6 @@ const workflows = {
   //   }
   // },
   Springer: {
-    // TODO: This isn't done. Finish it. Or maybe it is done. I can't tell.
     start: 'https://link.springer.com/journals/a/1',
     getData: async (page, event) => {
       const publicationsList = []
@@ -316,6 +308,61 @@ const workflows = {
             .map((val) => val.slice(0, val.indexOf('(')))
         )
         printTsvLine(publication.title, publication.link, members, event)
+      }
+    }
+  },
+  Wiley: {
+    start: 'https://onlinelibrary.wiley.com/action/showPublications?PubType=journal&startPage=&alphabetRange=a',
+    getData: async (page, event) => {
+      const publicationsList = []
+      let currentLetter = 'a'
+      debug('Getting Wiley journal names and links...')
+      let pageLoaded = true
+
+      while (pageLoaded) {
+        while (pageLoaded) {
+          const publicationsThisPage = await page.$$eval('a.visitable', (el) => {
+            return el.map((el) => { return { title: el.innerText, href: el.href } })
+          })
+          publicationsList.push(...publicationsThisPage)
+
+          const moreLinks = await page.$$eval('a.pagination__btn--next', (el) => {
+            return el.map(el => el.href)
+          })
+          if (moreLinks.length > 0) {
+            await page.goto(moreLinks[0])
+            pageLoaded = true
+          } else {
+            pageLoaded = false
+          }
+        }
+        currentLetter = String.fromCharCode(currentLetter.charCodeAt(0) + 1)
+        if (currentLetter <= 'z') {
+          await page.goto(`https://onlinelibrary.wiley.com/action/showPublications?PubType=journal&startPage=&alphabetRange=${currentLetter}`)
+          pageLoaded = true
+        }
+      }
+
+      for (const publication of publicationsList) {
+        try {
+          await page.goto(publication.href)
+          const editorialBoardLink = await page.$$eval(
+            'a.sub-menu-item',
+            (el) => el.filter((el) => el.innerText === 'Editorial Board').map((el) => el.href)[0]
+          )
+          if (typeof editorialBoardLink !== 'string') {
+            debug(`No editorial board link found for ${publication.title} (${publication.href})`)
+            continue
+          }
+          await page.goto(editorialBoardLink)
+          const members = await page.$eval('body', (el) =>
+            el.innerText.split('\n').filter((val) => /San Francisco|UCSF/.test(val)).map((val) => val.replaceAll(',', ' '))
+          )
+          printTsvLine(publication.href, publication.title, members, event)
+        } catch (e) {
+          debug(`Error getting editorial board for ${publication.title} (${publication.href})`)
+          debug(e)
+        }
       }
     }
   }

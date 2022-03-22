@@ -72,13 +72,3 @@ ipcMain.on('get-editors', async (event, publisher) => {
   }
   event.reply('done')
 })
-
-/*
-TimeoutError: Navigation timeout of 30000 ms exceeded
-    at /Users/trott/ucsf-ckm/editor-scraper/node_modules/puppeteer/lib/cjs/puppeteer/common/LifecycleWatcher.js:106:111
-    at async FrameManager.waitForFrameNavigation (/Users/trott/ucsf-ckm/editor-scraper/node_modules/puppeteer/lib/cjs/puppeteer/common/FrameManager.js:128:23)
-    at async Frame.waitForNavigation (/Users/trott/ucsf-ckm/editor-scraper/node_modules/puppeteer/lib/cjs/puppeteer/common/FrameManager.js:441:16)
-    at async Page.waitForNavigation (/Users/trott/ucsf-ckm/editor-scraper/node_modules/puppeteer/lib/cjs/puppeteer/common/Page.js:1218:16)
-    at async Object.getData (/Users/trott/ucsf-ckm/editor-scraper/workflows.js:294:13)
-    at async IpcMainImpl.<anonymous> (/Users/trott/ucsf-ckm/editor-scraper/main.js:53:7)
-*/
