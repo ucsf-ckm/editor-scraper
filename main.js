@@ -46,7 +46,7 @@ ipcMain.on('get-editors', async (event, publisher) => {
     const browser = await puppeteer.launch({
       headless: true,
       defaultViewport: { width: 1200, height: 900 },
-      executablePath: puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked')
+      executablePath: require('puppeteer').executablePath().replace('app.asar', 'app.asar.unpacked')
     })
     const page = await browser.newPage()
 

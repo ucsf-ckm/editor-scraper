@@ -163,6 +163,7 @@ const workflows = {
       }
     }
   },
+  // TODO: Nature looks busted. Fix it.
   Nature: {
     start: 'https://www.nature.com/siteindex',
     getData: async (page, event) => {
