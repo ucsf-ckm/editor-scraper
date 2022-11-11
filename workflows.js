@@ -164,59 +164,96 @@ const workflows = {
     }
   },
   // TODO: Nature looks busted. Fix it.
-  Nature: {
-    start: 'https://www.nature.com/siteindex',
+  // Nature: {
+  //   start: 'https://www.nature.com/siteindex',
+  //   getData: async (page, event) => {
+  //     debug('Getting Nature board links...')
+  //     // Skip these links
+  //     const data = await page.$$eval('#journals-az ul:not(.alpha-index) a', (el) => {
+  //       return el.map(el => { return { title: el.innerText, link: el.href } })
+  //     })
+
+  //     for (let i = 0; i < data.length; i++) {
+  //       const { link, title } = data[i]
+  //       debug(`Title: ${title}`)
+
+  //       // TODO: For at least one journal (bdj, British Dental Journal), the
+  //       // editorial board is on the /about page under the #editors hash.
+  //       // That practice will require special handling to avoid false positives.
+  //       // We want to confirm that the editorial board (or at least the id
+  //       // #editors) is actually there. For the other URLs, we're just checking
+  //       // for page-not-found.
+
+  //       const linksToTry = [
+  //         link + '/editors',
+  //         link + '/about/editors',
+  //         link + '/about/editorial-board',
+  //         link + '/about/editorialboard',
+  //         link + '/about/editor'
+  //       ]
+
+  //       let status
+  //       let editorsLink
+  //       for (editorsLink of linksToTry) {
+  //         debug(`Trying ${editorsLink}`)
+  //         const result = await page.goto(editorsLink, { waitFor: 'networkidle2' })
+  //         status = result.status()
+  //         debug(`Status: ${status}`)
+  //         if (status !== 404) {
+  //           break
+  //         }
+  //       }
+
+  //       if (status === 404) {
+  //         console.log(`Editor page not found for ${title} (${link})\t\t`)
+  //         continue
+  //       }
+
+  //       const members = await page.$$eval('p', (els) => els.map((val) => val.innerText.replace(/\n/g, ' ').match(/(.+)(?=San Francisco|UCSF)/))
+  //         .filter(val => val !== null)
+  //         .map(val => val[1])
+  //         .map(val => val.substring(0, val.indexOf(' University of California')) || val)
+  //         .map(val => val.trim())
+  //       )
+
+  //       printTsvLine(editorsLink, title, members, event)
+  //     }
+  //   }
+  // },
+  Oxford: {
+    start: 'https://academic.oup.com/journals/pages/journals_a_to_z',
     getData: async (page, event) => {
-      debug('Getting Nature board links...')
-      // Skip these links
-      const data = await page.$$eval('#journals-az ul:not(.alpha-index) a', (el) => {
-        return el.map(el => { return { title: el.innerText, link: el.href } })
-      })
-
-      for (let i = 0; i < data.length; i++) {
-        const { link, title } = data[i]
-        debug(`Title: ${title}`)
-
-        // TODO: For at least one journal (bdj, British Dental Journal), the
-        // editorial board is on the /about page under the #editors hash.
-        // That practice will require special handling to avoid false positives.
-        // We want to confirm that the editorial board (or at least the id
-        // #editors) is actually there. For the other URLs, we're just checking
-        // for page-not-found.
-
-        const linksToTry = [
-          link + '/editors',
-          link + '/about/editors',
-          link + '/about/editorial-board',
-          link + '/about/editorialboard',
-          link + '/about/editor'
-        ]
-
-        let status
-        let editorsLink
-        for (editorsLink of linksToTry) {
-          debug(`Trying ${editorsLink}`)
-          const result = await page.goto(editorsLink, { waitFor: 'networkidle2' })
-          status = result.status()
-          debug(`Status: ${status}`)
-          if (status !== 404) {
-            break
-          }
-        }
-
-        if (status === 404) {
-          console.log(`Editor page not found for ${title} (${link})\t\t`)
+      debug('Getting Oxford journal links...')
+      const journals = await page.$$eval(
+        '.secondaryContent a',
+        (el) => el.map((val) => { return { title: val.innerHTML, href: val.href } }).filter((val) => /^https:\/\/academic\.oup\.com\//.test(val.href) && !/#[A-Z]$/.test(val.href))
+      )
+      for (let i = 0; i < journals.length; i++) {
+        const linkBase = journals[i].href.replace(/\/pages\/.*$/, '')
+        let link = `${linkBase}/pages/Editorial_Board`
+        const title = journals[i].title
+        debug(`Trying ${link} for ${title}`)
+        let result = await page.goto(link, { waitFor: 'networkidle2' })
+        let status = result.status()
+        debug(`Status: ${status}`)
+        let members
+        if (status === 200) {
+          members = await page.$$eval('p', (els) => els.map((val) => val.innerText).filter((val) => /San Francisco|UCSF/.test(val)))
+          printTsvLine(link, title, members, event)
           continue
         }
 
-        const members = await page.$$eval('p', (els) => els.map((val) => val.innerText.replace(/\n/g, ' ').match(/(.+)(?=San Francisco|UCSF)/))
-          .filter(val => val !== null)
-          .map(val => val[1])
-          .map(val => val.substring(0, val.indexOf(' University of California')) || val)
-          .map(val => val.trim())
-        )
-
-        printTsvLine(editorsLink, title, members, event)
+        link = `${linkBase}/pages/editorial-board`
+        debug(`Trying ${link} for ${title}`)
+        result = await page.goto(link, { waitFor: 'networkidle2' })
+        status = result.status()
+        debug(`Status: ${status}`)
+        if (status === 200) {
+          members = await page.$$eval('nameGroup', (els) => els.map((val) => val.innerText.replaceAll('\n', '')).filter((val) => /San Francisco|UCSF/.test(val)))
+          printTsvLine(link, title, members, event)
+          continue
+        }
+        debug(`Can not find editorial board for ${title} (${linkBase})`)
       }
     }
   },
