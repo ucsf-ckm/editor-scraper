@@ -44,8 +44,8 @@ ipcMain.on('get-editors', async (event, publisher) => {
   try {
     // TODO: Add {headless: false} as an option for debugging.
     const browser = await puppeteer.launch({
-      headless: true,
-      defaultViewport: { width: 1200, height: 900 },
+      headless: false,
+      defaultViewport: { width: 1400, height: 1200 },
       executablePath: require('puppeteer').executablePath().replace('app.asar', 'app.asar.unpacked')
     })
     const page = await browser.newPage()

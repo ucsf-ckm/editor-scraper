@@ -92,6 +92,78 @@ const workflows = {
       }
     }
   },
+  Elsevier: {
+    start: 'https://www.sciencedirect.com/browse/journals-and-books?contentType=JL',
+    getData: async (page, event) => {
+      // TODO: This should be done for all workflows, probably.
+      await page.setRequestInterception(true)
+      page.on('request', (req) => {
+        if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+          req.abort()
+        } else {
+          req.continue()
+        }
+      })
+      const publicationsList = []
+      debug('Getting Elsevier journal names and links...')
+
+      const links = await page.$$eval('a.js-publication-title', (el) => {
+        return el.map(el => { return { title: el.innerText, link: el.href } })
+      })
+      publicationsList.push(...links)
+      let previousTitle = links[0].title
+
+      debug('Got first set of journal links....')
+      while (true) {
+        debug('Waiting for next-page link to appear on page...')
+        await page.waitForSelector('button[aria-label="Next page"]')
+
+        debug('Getting next page link...')
+        const linkIsDisabled = await page.$eval('button[aria-label="Next page"]', (el) => el.disabled)
+        if (linkIsDisabled) {
+          debug('Next page link is disabled, no more links...')
+          break
+        }
+        debug('Clicking next page link...')
+        await page.click('button[aria-label="Next page"]')
+
+        while (await page.$eval('a.js-publication-title', (el) => el.innerText) === previousTitle) {
+          debug('Waiting for page to load...')
+          await page.waitForTimeout(100)
+        }
+
+        debug('Getting journal links...')
+        const links = await page.$$eval('a.js-publication-title', (el) => {
+          return el.map(el => { return { title: el.innerText, link: el.href } })
+        })
+        publicationsList.push(...links)
+        debug(`Previous first title: ${previousTitle}, current first title: ${links[0].title}`)
+        previousTitle = links[0].title
+      }
+
+      debug(`Retrieved ${publicationsList.length} journal links...`)
+      for (const publication of publicationsList) {
+        // debug('Chilling out for 2 seconds before getting editorial board...')
+        // await page.waitForTimeout(2000)
+
+        const editorsLink = publication.link + '/about/editorial-board'
+        debug(`Navigating to ${editorsLink}...`)
+        try {
+          await page.goto(editorsLink, { waitFor: 'networkidle2' })
+        } catch (e) {
+          debug(`Error navigating to ${editorsLink}: ${e}`)
+          // It's probably a timeout on an image or something and it's probably fine to continue. ¯\_(ツ)_/¯
+          continue
+        }
+
+        const board = await page.$$eval('div.editor-group', (elements) => elements.map((el) => el.innerText))
+        debug('Full board: ' + JSON.stringify(board))
+        const members = board.filter((val) => /San Francisco|UCSF/.test(val))
+        debug('UCSF members: ' + JSON.stringify(members))
+        printTsvLine(publication.title, publication.link, members, event)
+      }
+    }
+  },
   LWW: {
     start: 'https://journals.lww.com/_layouts/15/oaks.journals/Sitemap_xml.aspx?format=xml',
     getData: async (page, event) => {
