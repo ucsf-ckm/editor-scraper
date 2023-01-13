@@ -9,6 +9,37 @@ const printTsvLine = (link, title, members, event) => {
 }
 
 const workflows = {
+  ASCO: {
+    start: 'https://ascopubs.org/',
+    getData: async (page, event) => {
+      debug('Getting ASCO journal links...')
+      const journalLinks = await page.$$eval('a', (el) =>
+        el.filter((el) => el.href.startsWith('https://ascopubs.org/journal/')).map((el) => el.href)
+      )
+      const deduppedLinks = [...new Set(journalLinks)]
+      const publicationsList = []
+      for (const link of deduppedLinks) {
+        debug(`Getting title from ${link}...`)
+        await page.goto(link)
+        const title = await page.$eval('title', (el) => el.innerText)
+        if (!title.endsWith('Educational Book')) {
+          publicationsList.push({ href: link, title })
+        } else {
+          debug(`Skipping ${title}...`)
+        }
+      }
+
+      for (const publication of publicationsList) {
+        debug(`Getting editorial board members from ${publication.href}...`)
+        await page.goto(`${publication.href.replace('/journal', '')}/about/editorial-roster`)
+        const members = await page.$eval('div.tab-content', (el) => {
+          const entries = el.innerText.split('\n').filter((val) => val.includes('San Francisco') || val.includes('UCSF'))
+          return entries
+        })
+        printTsvLine(publication.href, publication.title, members, event)
+      }
+    }
+  },
   AMA: {
     start: 'https://jamanetwork.com/',
     getData: async (page, event) => {
