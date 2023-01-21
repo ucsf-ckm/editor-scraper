@@ -63,6 +63,9 @@ ipcMain.on('get-editors', async (event, publisher) => {
     }
 
     const workflow = workflows[publisher]
+    if (workflow.timeout) {
+      page.setDefaultNavigationTimeout(workflow.timeout)
+    }
     await page.goto(workflow.start)
     await workflow.getData(page, event)
     await browser.close()
