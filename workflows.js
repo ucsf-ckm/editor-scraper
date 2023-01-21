@@ -394,6 +394,65 @@ const workflows = {
   //     }
   //   }
   // },
+  SAGE: {
+    // TODO: Check for a next-page link to see if the 2000 parameter needs to be increased
+    // or if this needs to be done in a loop (if SAGE decides to limit the number of journals
+    // returned in a single request).
+    timeout: 120000,
+    start: 'https://journals.sagepub.com/action/showPublications?startPage=0&pageSize=2000',
+    getData: async (page, event) => {
+      const tryLink = async (link, timeout) => {
+        page.setDefaultNavigationTimeout(timeout)
+        let result
+        try {
+          result = await page.goto(link)
+        } catch (e) {
+          // TODO: Stop at some point if this keeps happening.
+          if (e.name === 'TimeoutError') {
+            timeout = timeout * 2
+            debug(`Timeout error on ${link}, increasing timeout to ${timeout} and trying again`)
+            return await tryLink(link, timeout)
+          } else {
+            throw e
+          }
+        }
+        return result
+      }
+
+      debug('Getting SAGE journal links...')
+      const publicationsList = await page.$$eval('.item__title a', (el) =>
+        el.map((el) => { return { title: el.innerText, href: el.href } })
+      )
+
+      for (const publication of publicationsList) {
+        let result = await tryLink(publication.href, 60000)
+        let status = result.status()
+        debug(`Status: ${status}`)
+        if (status === 200) {
+          let href
+          try {
+            href = await page.$eval('a[data-id="view-editorial-board"]', (el) => el.href)
+          } catch (e) {
+            debug(`Skipping ${publication.title} (${publication.href}) because it does not have an editorial board. It is probably no longer published.`)
+            continue
+          }
+          result = await tryLink(href, 60000)
+          status = result.status()
+          if (status === 200) {
+            const members = await page.$$eval('div.editorial-board tr', (els) =>
+              els.map((val) => val.innerText).filter((val) => /San Francisco|UCSF/.test(val))
+            )
+            members.map((val) => val.replaceAll('\t', ', '))
+            printTsvLine(href, publication.title, members, event)
+          } else {
+            throw new Error(`Can not find editorial board for ${publication.title} (${href}): ${status}`)
+          }
+        } else {
+          throw new Error(`Can not find editorial board for ${publication.title} (${publication.href}): ${status}`)
+        }
+      }
+    }
+  },
   Springer: {
     start: 'https://link.springer.com/journals/a/1',
     getData: async (page, event) => {
