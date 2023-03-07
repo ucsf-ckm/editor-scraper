@@ -25,7 +25,7 @@
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "puppeteer": "^19.7.2",
-    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.1",
     "robots-txt-parser": "^2.0.2",
