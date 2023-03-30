@@ -511,6 +511,28 @@ const workflows = {
       }
     }
   },
+  'Taylor & Francis': {
+    timeout: 300000,
+    start: 'https://www.tandfonline.com/action/showPublications?pubType=journal&startPage=&pageSize=99999',
+    getData: async (page, event) => {
+      debug('Getting Taylor & Francis journal names and links...')
+      const publications = await page.$$eval('.art_title a', (el) => {
+        return el.map((el) => { return { title: el.innerText, link: el.href } })
+      })
+      for (const publication of publications) {
+        const editorialBoardLink = publication.link.replace('/journals/', '/action/journalInformation?show=editorialBoard&journalCode=')
+        // TODO: robots-txt-parser is very buggy and I need to find a replacement. It returns a crawl delay of 0 for this site.
+        //       The correct value is 1 so let's make sure we do that so they don't block us.
+        await page.waitForTimeout(1000)
+        await page.goto(editorialBoardLink)
+        const members = await page.$eval('.stJournal', (el) => {
+          return el.innerText.split('\n')
+            .filter((val) => /San Francisco|UCSF/.test(val))
+        })
+        printTsvLine(publication.title, publication.link, members, event)
+      }
+    }
+  },
   Wiley: {
     start: 'https://onlinelibrary.wiley.com/action/showPublications?PubType=journal&startPage=&alphabetRange=a',
     getData: async (page, event) => {
