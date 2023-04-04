@@ -32,7 +32,7 @@
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.5",
+    "@electron-forge/cli": "^6.1.0",
     "@electron-forge/maker-deb": "^6.1.0",
     "@electron-forge/maker-rpm": "^6.1.0",
     "@electron-forge/maker-squirrel": "^6.1.0",
