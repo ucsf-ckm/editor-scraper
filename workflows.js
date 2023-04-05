@@ -266,6 +266,33 @@ const workflows = {
       }
     }
   },
+  'Mary Ann Liebert': {
+    timeout: 300000,
+    start: 'https://home.liebertpub.com/publications/a-z',
+    getData: async (page, event) => {
+      debug('Getting Mary Ann Liebert board links...')
+      const data = await page.$$eval('a.pub-title', (el) => {
+        return el.map(el => { return { title: el.innerText, link: `${el.href}/editorial-board` } })
+      })
+
+      const getMembers = async (page, selector) => {
+        return await page.$$eval(selector, (els) => els.map((val) => val.innerText.replace(/[\u200B-\u200D\uFEFF]/g, '')).filter((val) => val.includes('San Francisco') || val.includes('UCSF')))
+      }
+
+      for (let i = 0; i < data.length; i++) {
+        const { link, title } = data[i]
+        debug(`Title: ${title}`)
+
+        await page.goto(link, { waitFor: 'networkidle2' })
+
+        let members = await getMembers(page, 'div.editorial p')
+        if (members.length === 0) {
+          members = await getMembers(page, '.member')
+        }
+        printTsvLine(title, link, members, event)
+      }
+    }
+  },
   // TODO: Nature looks busted. Fix it.
   // Nature: {
   //   start: 'https://www.nature.com/siteindex',
