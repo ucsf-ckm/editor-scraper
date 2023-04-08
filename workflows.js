@@ -2,7 +2,6 @@
 
 const { debuglog } = require('util')
 const debug = debuglog('scraper')
-const xml2js = require('xml2js')
 
 const printTsvLine = (link, title, members, event) => {
   event.reply('print', [link, title, members.join(';').replace(/[ \n]+/g, ' ')].join('\t') + '\n')
@@ -195,77 +194,79 @@ const workflows = {
       }
     }
   },
-  LWW: {
-    start: 'https://journals.lww.com/_layouts/15/oaks.journals/Sitemap_xml.aspx?format=xml',
-    getData: async (page, event) => {
-      const data = await page.$eval('body .pretty-print', (el) => el.innerText)
-      const xml = await xml2js.parseStringPromise(data)
-      const boardLinks = xml.sitemapindex.sitemap
-        .map((value) => value.loc[0])
-        .map((value) => value.replace(/_layouts\/15\/oaks\.journals\/sitemap_xml\.aspx$/, ''))
+  // TODO: Need to find an XML parser that is maintained.
+  // Until then, this code is broken. :-(
+  // LWW: {
+  //   start: 'https://journals.lww.com/_layouts/15/oaks.journals/Sitemap_xml.aspx?format=xml',
+  //   getData: async (page, event) => {
+  //     const data = await page.$eval('body .pretty-print', (el) => el.innerText)
+  //     // const xml = await xml2js.parseStringPromise(data)
+  //     const boardLinks = xml.sitemapindex.sitemap
+  //       .map((value) => value.loc[0])
+  //       .map((value) => value.replace(/_layouts\/15\/oaks\.journals\/sitemap_xml\.aspx$/, ''))
 
-      let timeout = 30000 // 30 seconds
-      page.setDefaultTimeout(timeout)
-      const tryLinks = async (links, options) => {
-        if (options?.backoff) {
-          timeout = timeout * 2
-          debug(`Increasing timeout to ${timeout}ms`)
-          page.setDefaultTimeout(timeout)
-        }
-        let title
-        for (const link of links) {
-          debug(`Trying ${link}`)
-          const result = await page.goto(link, { waitFor: 'networkidle2' })
-          const status = result.status()
-          debug(`Status: ${status}`)
-          if (status === 404) {
-            continue
-          }
-          title = (await page.title()).trim()
-          if (title === 'Just a moment...') {
-            debug('Awaiting navigation')
-            try {
-              await page.waitForSelector('#aspnetForm')
-            } catch (e) {
-              if (e.name === 'TimeoutError') {
-                debug(`Timeout error on ${link}, trying again with backoff`)
-                // TODO: stop at some point so you're not in an infinite loop?
-                title = (await tryLinks([link], { backoff: true }))
-              } else {
-                throw e
-              }
-            }
-            title = (await page.title()).trim()
-          }
-          debug(`Got title ${title}`)
-          if (!title.startsWith('Page Nor Found')) {
-            break
-          }
-        }
-        if (!title) {
-          console.warn(`Page not found for ${links}`)
-        }
-        return title
-      }
+  //     let timeout = 30000 // 30 seconds
+  //     page.setDefaultTimeout(timeout)
+  //     const tryLinks = async (links, options) => {
+  //       if (options?.backoff) {
+  //         timeout = timeout * 2
+  //         debug(`Increasing timeout to ${timeout}ms`)
+  //         page.setDefaultTimeout(timeout)
+  //       }
+  //       let title
+  //       for (const link of links) {
+  //         debug(`Trying ${link}`)
+  //         const result = await page.goto(link, { waitFor: 'networkidle2' })
+  //         const status = result.status()
+  //         debug(`Status: ${status}`)
+  //         if (status === 404) {
+  //           continue
+  //         }
+  //         title = (await page.title()).trim()
+  //         if (title === 'Just a moment...') {
+  //           debug('Awaiting navigation')
+  //           try {
+  //             await page.waitForSelector('#aspnetForm')
+  //           } catch (e) {
+  //             if (e.name === 'TimeoutError') {
+  //               debug(`Timeout error on ${link}, trying again with backoff`)
+  //               // TODO: stop at some point so you're not in an infinite loop?
+  //               title = (await tryLinks([link], { backoff: true }))
+  //             } else {
+  //               throw e
+  //             }
+  //           }
+  //           title = (await page.title()).trim()
+  //         }
+  //         debug(`Got title ${title}`)
+  //         if (!title.startsWith('Page Nor Found')) {
+  //           break
+  //         }
+  //       }
+  //       if (!title) {
+  //         console.warn(`Page not found for ${links}`)
+  //       }
+  //       return title
+  //     }
 
-      for (let i = 0; i < boardLinks.length; i++) {
-        const linksToTry = [
-          boardLinks[i] + 'Pages/editorialboard.aspx',
-          boardLinks[i] + 'Pages/JournalMasthead.aspx',
-          boardLinks[i] + 'Pages/JournalContactsEditorialBoard.aspx',
-          boardLinks[i] + 'Pages/editorialadvisoryboard.aspx',
-          boardLinks[i] + 'Pages/publicationstaff.aspx',
-          boardLinks[i] + 'Pages/aboutthejournal.aspx'
-        ]
-        const title = await tryLinks(linksToTry)
+  //     for (let i = 0; i < boardLinks.length; i++) {
+  //       const linksToTry = [
+  //         boardLinks[i] + 'Pages/editorialboard.aspx',
+  //         boardLinks[i] + 'Pages/JournalMasthead.aspx',
+  //         boardLinks[i] + 'Pages/JournalContactsEditorialBoard.aspx',
+  //         boardLinks[i] + 'Pages/editorialadvisoryboard.aspx',
+  //         boardLinks[i] + 'Pages/publicationstaff.aspx',
+  //         boardLinks[i] + 'Pages/aboutthejournal.aspx'
+  //       ]
+  //       const title = await tryLinks(linksToTry)
 
-        debug(`Title: ${title}`)
+  //       debug(`Title: ${title}`)
 
-        const members = await page.$$eval('p', (els) => els.map((val) => val.innerText.replace(/[\u200B-\u200D\uFEFF]/g, '')).filter((val) => val.includes('San Francisco')))
-        printTsvLine(boardLinks[i], title, members, event)
-      }
-    }
-  },
+  //       const members = await page.$$eval('p', (els) => els.map((val) => val.innerText.replace(/[\u200B-\u200D\uFEFF]/g, '')).filter((val) => val.includes('San Francisco')))
+  //       printTsvLine(boardLinks[i], title, members, event)
+  //     }
+  //   }
+  // },
   'Mary Ann Liebert': {
     timeout: 300000,
     start: 'https://home.liebertpub.com/publications/a-z',

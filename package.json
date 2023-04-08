@@ -28,8 +28,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "robots-txt-parser": "^2.0.2",
-    "xml2js": "^0.4.23"
+    "robots-txt-parser": "^2.0.2"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.1.0",
