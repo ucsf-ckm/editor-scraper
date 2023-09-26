@@ -36,7 +36,7 @@
     "@electron-forge/maker-rpm": "^6.4.2",
     "@electron-forge/maker-squirrel": "^6.4.2",
     "@electron-forge/maker-zip": "^6.4.2",
-    "electron": "^26.2.1",
+    "electron": "^26.2.2",
     "standard": "^17.1.0"
   },
   "build": {
