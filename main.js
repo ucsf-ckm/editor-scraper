@@ -1,6 +1,7 @@
 'use strict'
 
 const path = require('path')
+const { setTimeout } = require('node:timers/promises')
 
 const { app, BrowserWindow, ipcMain } = require('electron')
 
@@ -56,7 +57,7 @@ ipcMain.on('get-editors', async (event, publisher) => {
       if (await robots.canCrawl(url)) {
         // Use crawl delay requested by publisher.
         const crawlDelay = await robots.getCrawlDelay(url)
-        await page.waitForTimeout(crawlDelay * 1000)
+        await setTimeout(crawlDelay * 1000)
         return originalGoto(url)
       }
       throw new Error('Blocked by robots.txt')

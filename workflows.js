@@ -1,6 +1,7 @@
 'use strict'
 
 const { debuglog } = require('util')
+const { setTimeout } = require('node:timers/promises')
 const debug = debuglog('scraper')
 
 const printTsvLine = (link, title, members, event) => {
@@ -159,7 +160,7 @@ const workflows = {
 
         while (await page.$eval('a.js-publication-title', (el) => el.innerText) === previousTitle) {
           debug('Waiting for page to load...')
-          await page.waitForTimeout(100)
+          await setTimeout(100)
         }
 
         debug('Getting journal links...')
@@ -174,7 +175,7 @@ const workflows = {
       debug(`Retrieved ${publicationsList.length} journal links...`)
       for (const publication of publicationsList) {
         // debug('Chilling out for 2 seconds before getting editorial board...')
-        // await page.waitForTimeout(2000)
+        // await setTimeout(2000)
 
         const editorsLink = publication.link + '/about/editorial-board'
         debug(`Navigating to ${editorsLink}...`)
@@ -551,7 +552,7 @@ const workflows = {
         const editorialBoardLink = publication.link.replace('/journals/', '/action/journalInformation?show=editorialBoard&journalCode=')
         // TODO: robots-txt-parser is very buggy and I need to find a replacement. It returns a crawl delay of 0 for this site.
         //       The correct value is 1 so let's make sure we do that so they don't block us.
-        await page.waitForTimeout(1000)
+        await setTimeout(1000)
         await page.goto(editorialBoardLink)
         const members = await page.$eval('.stJournal', (el) => {
           return el.innerText.split('\n')
