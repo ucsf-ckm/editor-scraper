@@ -562,6 +562,72 @@ const workflows = {
       }
     }
   },
+  Thieme: {
+    start: 'https://www.thieme-connect.com/products/ejournals/journals?query=*&sort=TITLE_ALPHA_ASC&rows=318&offset=0',
+    getData: async (page, event) => {
+      const pdfjsLib = await import('pdfjs-dist')
+
+      debug('Getting Thieme journal names and links...')
+      const publications = await page.$$eval('.journalTitle a', (el) => {
+        return el.map((el) => { return { title: el.innerText, link: el.href } })
+      })
+      debug(`Found ${publications.length} journal titles...`)
+      for (const publication of publications) {
+        debug(`Getting editorial board for ${publication.title}...`)
+        await page.goto(publication.link)
+        const links = await page.$$eval('.dropMenu.linkList .tab a', (el) => {
+          // TODO?: Lots of these pages are in German, so check for the German equivalent of "Editorial Board"?
+          return el.filter((el) => el.innerText === 'Editorial Board').map((el) => el.href)
+        })
+        if (links.length === 0) {
+          printTsvLine(publication.title, publication.link, ['No editorial board link found'], event)
+          continue
+        }
+        const editorialBoardLink = links[0]
+        const response = await fetch(editorialBoardLink)
+        if (!response.ok) {
+          debug(`Error fetching ${editorialBoardLink}: ${response.status}`)
+          printTsvLine(publication.title, publication.link, ['Error fetching editorial board, link broken?'], event)
+          continue
+        }
+
+        if (editorialBoardLink.endsWith('.pdf')) {
+          let doc
+          try {
+            doc = await pdfjsLib.getDocument({ data: await response.arrayBuffer() }).promise
+          } catch (e) {
+            debug(`Error reading PDF: ${e}`)
+            printTsvLine(publication.title, publication.link, ['Error reading PDF, link broken?'], event)
+            continue
+          }
+          let currPage = 1 // Pages are 1-based not 0-based
+          const numPages = doc.numPages
+          let fullText = ''
+          while (currPage <= numPages) {
+            const pdfPage = await doc.getPage(currPage)
+            const content = await pdfPage.getTextContent()
+            content.items.forEach(function (item) {
+              fullText += ' ' + item.str
+            })
+            currPage++
+          }
+          if (/San Francisco|UCSF/.test(fullText)) {
+            printTsvLine(publication.title, publication.link, ['Check PDF'], event)
+          } else {
+            printTsvLine(publication.title, publication.link, [''], event)
+          }
+        } else {
+          await page.goto(editorialBoardLink)
+          const boardText = await page.$eval('body', (el) => el.innerText)
+          if (/San Francisco|UCSF/.test(boardText)) {
+            printTsvLine(publication.title, publication.link, ['Check editorial board web page'], event)
+          } else {
+            printTsvLine(publication.title, publication.link, [''], event)
+          }
+        }
+      }
+    }
+  },
   Wiley: {
     start: 'https://onlinelibrary.wiley.com/action/showPublications?PubType=journal&startPage=&alphabetRange=a',
     getData: async (page, event) => {
