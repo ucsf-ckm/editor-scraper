@@ -389,40 +389,44 @@ const workflows = {
       }
     }
   },
-  // PLoS: {
-  //   // TODO: This isn't finished. Finish it.
-  //   start: 'https://plos.org/publish/submit/',
-  //   getData: async (page, event) => {
-  //     debug('Getting PLoS journal links...')
-  //     const publicationsList = await page.$$eval('a', (el) =>
-  //       el.filter((el) => el.innerText === 'Journal Information').map((el) => { return { href: el.href } })
-  //     )
+  PLoS: {
+    start: 'https://plos.org/your-journal-options/',
+    getData: async (page, event) => {
+      debug('Getting PLoS journal links...')
+      const publicationsList = await page.$$eval('a.journal-selector__list-item-background-image', (el) =>
+        el.map((el) => { return { title: el.innerText, href: el.href } })
+      )
 
-  //     // PLoS One will probably be a lot different than the others.
+      debug('Accepting cookies...')
+      await page.click('button ::-p-text(Save Selected Preferences and Close)')
 
-  //     for (const publication of publicationsList) {
-  //       const links = [
-  //         publication.href.replace(/\/[^/]+$/, '/editorial-board'),
-  //         publication.href.replace(/\/[^/]+$/, '/editors-and-publishers'),
-  //         publication.href.replace(/\/[^/]+$/, '/pages/about'),
-  //       ]
-  //       for (const link of links) {
-  //         const result = await page.goto(link)
-  //         const status = result.status()
-  //         debug(`Status: ${status}`)
-  //         if (status === 200) {
-  //           break
-  //         }
-  //       }
+      // PLoS One will probably be a lot different than the others.
 
-  //       const members = await page.$eval('body', (el) =>
-  //       // Matching on San Francisco preceded by a space to keep it from matching job listings for San Francisco.
-  //         el.innerText.split('\n').filter((val) => val.includes(' San Francisco')).map((val) => val.slice(0, val.indexOf(',')))
-  //       )
-  //       printTsvLine(publication.href, publication.title, members, event)
-  //     }
-  //   }
-  // },
+      for (const publication of publicationsList) {
+        debug(`Going to ${publication.title}...`)
+        await page.goto(publication.href)
+
+        debug('Clicking About button...')
+        await page.click('button ::-p-text(About)')
+
+        debug('Getting editorial board links...')
+        const editorsLinks = await page.$$eval('a', (el) => el.filter((el) => /Editorial Board|Staff Editors|Section Editors|Advisory Groups|Editors-in-Chief/.test(el.innerText)).map((el) => el.href))
+
+        const results = []
+        for (const link of editorsLinks) {
+          debug(`Navigating to ${link}...`)
+          await page.goto(link)
+          const members = await page.$$eval('p', (el) => el.map((val) => val.innerText).filter((val) => /San Francisco|UCSF/.test(val)))
+          if (members.length > 0) {
+            results.push(`Check ${link}`)
+          }
+        }
+
+        debug('Printing editorial board links...')
+        printTsvLine(publication.href, publication.title, results, event)
+      }
+    }
+  },
   SAGE: {
     // TODO: Check for a next-page link to see if the 2000 parameter needs to be increased
     // or if this needs to be done in a loop (if SAGE decides to limit the number of journals
