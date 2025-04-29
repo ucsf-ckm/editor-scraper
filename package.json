@@ -24,7 +24,7 @@
   "homepage": "https://github.com/ucsf-ckm/editor-scraper#readme",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "pdfjs-dist": "^5.1.91",
+    "pdfjs-dist": "^5.2.133",
     "puppeteer": "^24.7.2",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
