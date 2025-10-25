@@ -4,10 +4,8 @@
   "description": "tool to get retrieve editors of scientific journals.",
   "main": "main.js",
   "scripts": {
-    "start": "electron-forge start",
-    "test": "standard --fix",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "start": "electron .",
+    "test": "standard --fix"
   },
   "repository": {
     "type": "git",
@@ -23,6 +21,7 @@
   },
   "homepage": "https://github.com/ucsf-ckm/editor-scraper#readme",
   "dependencies": {
+    "electron": "^38.4.0",
     "electron-squirrel-startup": "^1.0.0",
     "pdfjs-dist": "^5.4.296",
     "puppeteer": "^24.25.0",
@@ -32,43 +31,10 @@
     "robots-txt-parser": "^2.0.2"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.10.2",
-    "@electron-forge/maker-deb": "^7.10.2",
-    "@electron-forge/maker-rpm": "^7.10.2",
-    "@electron-forge/maker-squirrel": "^7.10.2",
-    "@electron-forge/maker-zip": "^7.10.2",
-    "electron": "^38.4.0",
     "standard": "^17.1.0"
   },
   "build": {
     "asar": true,
     "asarUnpack": "node_modules/puppeteer/.local-chromium/**/*"
-  },
-  "config": {
-    "forge": {
-      "packagerConfig": {},
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "editor_scraper"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin"
-          ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
-        }
-      ]
-    }
   }
 }
