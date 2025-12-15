@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/ucsf-ckm/editor-scraper#readme",
   "dependencies": {
-    "electron": "^39.2.6",
+    "electron": "^39.2.7",
     "electron-squirrel-startup": "^1.0.0",
     "pdfjs-dist": "^5.4.449",
     "puppeteer": "^24.32.1",
