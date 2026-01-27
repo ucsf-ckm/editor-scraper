@@ -24,7 +24,7 @@
     "electron": "^40.0.0",
     "electron-squirrel-startup": "^1.0.0",
     "pdfjs-dist": "^5.4.530",
-    "puppeteer": "^24.35.0",
+    "puppeteer": "^24.36.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
