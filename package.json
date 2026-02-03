@@ -23,7 +23,7 @@
   "dependencies": {
     "electron": "^40.1.0",
     "electron-squirrel-startup": "^1.0.0",
-    "pdfjs-dist": "^5.4.530",
+    "pdfjs-dist": "^5.4.624",
     "puppeteer": "^24.36.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
